@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import Agenda from "./pages/Agenda";
 import Compensation from "./pages/Compensation";
+import Quotations from "./pages/Quotations";
 import Login from "./pages/Login";
 import { AuthProvider, RequireAuth, RequireAdmin } from "./lib/auth";
 
@@ -28,6 +29,7 @@ const TITLES = {
   "/pipeline": "Pipeline board — Qiro CRM",
   "/follow-ups": "Follow-ups — Qiro CRM",
   "/deals": "Deals — Qiro CRM",
+  "/quotations": "Quotations & Proposals — Qiro CRM",
   "/customers": "Customers — Qiro CRM",
   "/contacts": "Contacts — Qiro CRM",
   "/activities": "Activity log — Qiro CRM",
@@ -62,6 +64,7 @@ export default function App() {
         <Route path="/pipeline" element={<RequireAuth><Pipeline /></RequireAuth>} />
         <Route path="/follow-ups" element={<RequireAuth><FollowUps /></RequireAuth>} />
         <Route path="/deals" element={<RequireAuth><Deals /></RequireAuth>} />
+        <Route path="/quotations" element={<RequireAuth><Quotations /></RequireAuth>} />
         <Route path="/customers" element={<RequireAuth><Customers /></RequireAuth>} />
         <Route path="/contacts" element={<RequireAuth><Contacts /></RequireAuth>} />
         <Route path="/activities" element={<RequireAuth><Activities /></RequireAuth>} />

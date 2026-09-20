@@ -290,6 +290,7 @@ export const useNotifications = () =>
   useApi("/notifications", mapNotifications, demo.notifications);
 export const useSalaries = () => useApi("/salaries", (res) => res?.data ?? [], []);
 export const useMySalary = () => useApi("/salaries/my", (res) => res?.data ?? null, null);
+export const useQuotations = () => useApi("/quotations", (res) => res?.data ?? [], []);
 
 /* ---------- derived views ---------- */
 
@@ -607,6 +608,12 @@ export const crud = {
   },
   salaries: {
     update: (userId, body) => run(api.put(`/salaries/${userId}`, body))
+  },
+  quotations: {
+    create: (body) => run(api.post("/quotations", body)),
+    update: (id, body) => run(api.put(`/quotations/${id}`, body)),
+    remove: (id) => run(api.del(`/quotations/${id}`)),
+    sendEmail: (id, body) => run(api.post(`/quotations/${id}/send-email`, body))
   },
   notifications: {
     markRead: (id) => run(api.put(`/notifications/${id}/read`)),

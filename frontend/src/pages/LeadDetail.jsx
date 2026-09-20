@@ -13,6 +13,7 @@ import {
   Paperclip,
   Share2,
   FileDown,
+  FileText,
   Trash2,
   Pencil
 } from "lucide-react";
@@ -735,7 +736,17 @@ export default function LeadDetail() {
       <Section
         title="Quotation / Deal"
         description={`${deals.length} linked`}
-        action={<AddButton onClick={() => setDealForm({})}>New Quotation / Deal</AddButton>}
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              to="/quotations"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted shadow-2xs"
+            >
+              <FileText className="size-3.5 text-primary" /> Open Quotation Builder
+            </Link>
+            <AddButton onClick={() => setDealForm({})}>New Quotation / Deal</AddButton>
+          </div>
+        }
       >
         {deals.length === 0 ? (
           <Panel>

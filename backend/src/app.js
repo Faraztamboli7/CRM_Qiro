@@ -21,6 +21,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const metaRoutes = require("./routes/metaRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const calendarRoutes = require("./routes/calendarRoutes");
+const quotationRoutes = require("./routes/quotationRoutes");
 
 
 const app = express();
@@ -76,6 +77,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/webhooks", metaRoutes);
 app.use("/api/salaries", salaryRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/quotations", quotationRoutes);
 
 
 const PORT = process.env.PORT || 5000;

@@ -16,6 +16,7 @@ import {
   BarChart3,
   ShieldCheck,
   Award,
+  FileText,
   Bell,
   CalendarDays,
   Search,
@@ -43,7 +44,8 @@ const navGroups = [
       { to: "/leads", label: "Capture leads", icon: Target, step: "1" },
       { to: "/follow-ups", label: "Follow up", icon: Clock, step: "2", badgeKey: "followUps" },
       { to: "/deals", label: "Develop deals", icon: BadgePercent, step: "3" },
-      { to: "/customers", label: "Convert customers", icon: Building2, step: "4" }
+      { to: "/quotations", label: "Quotations", icon: FileText, step: "4" },
+      { to: "/customers", label: "Convert customers", icon: Building2, step: "5" }
     ]
   },
   {
