@@ -471,7 +471,14 @@ const getSales = async (req, res) => {
 
                     c.status AS customer_status,
 
-                    d.title AS deal_title
+                    d.title AS deal_title,
+                    d.amount AS deal_amount,
+
+                    l.first_name AS lead_first_name,
+                    l.last_name  AS lead_last_name,
+                    l.company    AS lead_company,
+                    l.phone      AS lead_phone,
+                    l.email      AS lead_email
 
                 FROM sales s
 
@@ -483,6 +490,9 @@ const getSales = async (req, res) => {
 
                 LEFT JOIN deals d
                     ON s.deal_id = d.id
+
+                LEFT JOIN leads l
+                    ON c.lead_id = l.id
 
                 ${whereClause}
 
@@ -560,7 +570,13 @@ const getSaleById = async (req, res) => {
                 c.status AS customer_status,
 
                 d.title AS deal_title,
-                d.amount AS deal_amount
+                d.amount AS deal_amount,
+
+                l.first_name AS lead_first_name,
+                l.last_name  AS lead_last_name,
+                l.company    AS lead_company,
+                l.phone      AS lead_phone,
+                l.email      AS lead_email
 
             FROM sales s
 
@@ -572,6 +588,9 @@ const getSaleById = async (req, res) => {
 
             LEFT JOIN deals d
                 ON s.deal_id = d.id
+
+            LEFT JOIN leads l
+                ON c.lead_id = l.id
 
             WHERE s.id = $1
         `;

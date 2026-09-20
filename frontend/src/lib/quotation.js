@@ -730,183 +730,444 @@ export async function shareQuotationPdf(payload) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Tax Invoice PDF (Preserved exactly as required)                    */
+/* Tax Invoice PDF — Professional layout matching Qiro reference       */
 /* ------------------------------------------------------------------ */
+
+/** Convert number to Indian words (rupees) */
+function numberToWordsINR(num) {
+  if (!num || num === 0) return "Zero";
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  const convert = (n) => {
+    if (n === 0) return "";
+    if (n < 20) return ones[n] + " ";
+    if (n < 100) return tens[Math.floor(n / 10)] + " " + (n % 10 ? ones[n % 10] + " " : "");
+    if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred " + convert(n % 100);
+    if (n < 100000) return convert(Math.floor(n / 1000)) + "Thousand " + convert(n % 1000);
+    if (n < 10000000) return convert(Math.floor(n / 100000)) + "Lakh " + convert(n % 100000);
+    return convert(Math.floor(n / 10000000)) + "Crore " + convert(n % 10000000);
+  };
+
+  const rounded = Math.round(Math.abs(num));
+  return "Rs. " + convert(rounded).replace(/\s+/g, " ").trim() + " Only";
+}
+
+/** Get financial year string e.g. "2026-27" */
+function financialYear(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const month = d.getMonth(); // 0-based
+  const year = d.getFullYear();
+  const fy = month >= 3 ? year : year - 1; // April onwards = current FY
+  return `${fy}-${String(fy + 1).slice(2)}`;
+}
 
 export function buildInvoicePdf(sale, customerName = null) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
-  const M = 48;
-  let y = 64;
+  const M = 36;
+  const contentW = W - M * 2;
+  let y = 0;
 
   const raw = sale?.raw ?? sale ?? {};
   const invoiceNum = raw.invoice_number || sale?.id || `INV-${Date.now()}`;
   const saleDate = raw.sale_date || sale?.date || new Date().toISOString();
-  const customer = customerName || sale?.customer || raw.customer_code || "Valued Customer";
-  const item = raw.product_service || "Products & Professional Services";
   const saleAmount = Number(raw.sale_amount ?? sale?.amount ?? 0);
   const discount = Number(raw.discount ?? 0);
   const tax = Number(raw.tax ?? 0);
   const finalAmount = Number(raw.final_amount ?? sale?.amount ?? (saleAmount - discount + tax));
   const paymentStatus = String(raw.payment_status ?? sale?.status ?? "PENDING").toUpperCase();
-  const paymentMethod = String(raw.payment_method ?? "UPI").replace(/_/g, " ");
-  const owner = sale?.owner || "Sales Executive";
+  const dealTitle = raw.deal_title || raw.product_service || "Professional Services";
+  const dealAmount = Number(raw.deal_amount ?? finalAmount);
 
-  // Header banner
-  doc.setFillColor(15, 23, 42); // Slate 900
-  doc.rect(0, 0, W, 96, "F");
-  
-  doc.setTextColor(255, 255, 255);
+  // Client details from lead join
+  const clientName = customerName
+    || [raw.lead_first_name, raw.lead_last_name].filter(Boolean).join(" ")
+    || raw.customer_code
+    || "Valued Customer";
+  const clientCompany = raw.lead_company || "";
+  const clientPhone = raw.lead_phone || "";
+
+  // Format invoice number for display: QTIPL/YYYY-YY/XXXX
+  const fy = financialYear(saleDate);
+  const invSeq = invoiceNum.replace(/\D/g, "").slice(-4).padStart(4, "0");
+  const displayInvoiceNo = `QTIPL/${fy}/${invSeq}`;
+
+  // Format date as YYYY-MM-DD
+  const dateObj = new Date(saleDate);
+  const formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+
+  // GST calculations (18% total = CGST 9% + SGST 9%)
+  const taxableAmount = saleAmount - discount;
+  const cgstRate = 9;
+  const sgstRate = 9;
+  const cgstAmt = Math.round(taxableAmount * cgstRate / 100);
+  const sgstAmt = Math.round(taxableAmount * sgstRate / 100);
+  const totalRounded = Math.round(taxableAmount + cgstAmt + sgstAmt);
+  const gstTotal = cgstAmt + sgstAmt;
+
+  // Dark teal theme (matches reference)
+  const tealR = 0, tealG = 77, tealB = 77;
+
+  // Helper: draw bordered cell
+  const drawCell = (x, cy, w, h, opts = {}) => {
+    doc.setDrawColor(tealR, tealG, tealB);
+    doc.setLineWidth(0.5);
+    if (opts.fill) {
+      doc.setFillColor(...(opts.fillColor || [0, 77, 77]));
+      doc.rect(x, cy, w, h, "FD");
+    } else {
+      doc.rect(x, cy, w, h, "S");
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAX INVOICE title bar
+  // ═══════════════════════════════════════════════════════════════
+  y = M;
+  const titleH = 22;
+  drawCell(M, y, contentW, titleH, { fill: true, fillColor: [0, 77, 77] });
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.text("QIRO CRM", M, 46);
-
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text("Official Tax Invoice", M, 68);
+  doc.setTextColor(255, 255, 255);
+  doc.text("TAX INVOICE", W / 2, y + 15, { align: "center" });
 
+  doc.setFontSize(7);
+  doc.setTextColor(30, 30, 30);
+  doc.text("ORIGINAL FOR RECIPIENT", W - M, y + 8, { align: "right" });
+
+  y += titleH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Company header block
+  // ═══════════════════════════════════════════════════════════════
+  const compH = 68;
+  drawCell(M, y, contentW, compH);
+
+  doc.setTextColor(0, 77, 77);
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text(`#${invoiceNum}`, W - M, 46, { align: "right" });
+  doc.text("QIRO TECH INNOVATION PVT. LTD.", W / 2, y + 22, { align: "center" });
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(7);
+  doc.setTextColor(60, 60, 60);
   doc.text(
-    `Date: ${new Date(saleDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}`,
-    W - M,
-    68,
-    { align: "right" }
+    "OFFICE NO 602, 6TH FLOOR, THE BUSINESS ADVANTEDGE, NEAR LAXMI CHOWK, MARUNJI ROAD, HINJAWADI PHASE I, HINJAWADI, PUNE 411057",
+    W / 2, y + 37, { align: "center" }
   );
+  doc.text(
+    `Email: ${COMPANY_DETAILS.email} | Ph: ${COMPANY_DETAILS.phone}`,
+    W / 2, y + 49, { align: "center" }
+  );
+  doc.text(`GSTIN: ${COMPANY_DETAILS.gstin}`, W / 2, y + 59, { align: "center" });
 
-  // Billing details
-  y = 135;
-  doc.setTextColor(30, 41, 59);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Billed To (Customer)", M, y);
-  doc.text("Billed By (Company)", W / 2, y);
+  y += compH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Client Details (left) | Invoice Metadata (right)
+  // ═══════════════════════════════════════════════════════════════
+  const detailH = 120;
+  const halfW = contentW / 2;
+
+  drawCell(M, y, halfW, detailH);
+  drawCell(M + halfW, y, halfW, detailH);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const left = [
-    String(customer),
-    raw.deal_title ? `Deal: ${raw.deal_title}` : null,
-    "Payment Terms: Standard Commercial Terms"
-  ].filter(Boolean);
+  doc.setFontSize(8);
+  doc.setTextColor(30, 30, 30);
 
-  const right = [
-    "Qiro Technologies Pvt Ltd",
-    `Account Manager: ${owner}`,
-    `GSTIN: ${COMPANY_DETAILS.gstin}`,
-    `Email: ${COMPANY_DETAILS.email}`
+  let ly = y + 16;
+  const labelX = M + 8;
+  const valLX = M + 72;
+
+  // Client Name
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("Client Name :", labelX, ly);
+  doc.setFontSize(9);
+  doc.text(String(clientCompany || clientName).toUpperCase(), valLX, ly);
+
+  // Address (placeholder — lead address not stored)
+  ly += 16;
+  doc.setFontSize(8);
+  doc.text("Address :", labelX, ly);
+  doc.setFont("helvetica", "normal");
+
+  // Mobile
+  ly += 30;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("Mobile No. :", labelX, ly);
+  doc.setFont("helvetica", "normal");
+  doc.text(String(clientPhone), valLX, ly);
+
+  // Pincode
+  ly += 14;
+  doc.setFont("helvetica", "bold");
+  doc.text("Pincode :", labelX, ly);
+
+  // GSTIN
+  ly += 14;
+  doc.setFont("helvetica", "bold");
+  doc.text("GSTIN :", labelX, ly);
+
+  // Right column — Invoice metadata
+  const rLabelX = M + halfW + 8;
+  const rValX = M + halfW + 90;
+  let ry = y + 16;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("Invoice Date :", rLabelX, ry);
+  doc.setFont("helvetica", "normal");
+  doc.text(formattedDate, rValX, ry);
+
+  ry += 16;
+  doc.setFont("helvetica", "bold");
+  doc.text("Invoice No :", rLabelX, ry);
+  doc.setFont("helvetica", "normal");
+  doc.text(displayInvoiceNo, rValX, ry);
+
+  ry += 16;
+  doc.setFont("helvetica", "bold");
+  doc.text("State Name :", rLabelX, ry);
+  doc.setFont("helvetica", "normal");
+  doc.text("Maharashtra", rValX, ry);
+
+  ry += 16;
+  doc.setFont("helvetica", "bold");
+  doc.text("State Code :", rLabelX, ry);
+  doc.setFont("helvetica", "normal");
+  doc.text("MH", rValX, ry);
+
+  ry += 16;
+  doc.setFont("helvetica", "bold");
+  doc.text("Place of Supply :", rLabelX, ry);
+  doc.setFont("helvetica", "normal");
+  doc.text("Maharashtra (27)", rValX, ry);
+
+  y += detailH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Items table header
+  // ═══════════════════════════════════════════════════════════════
+  const colSN = 35;
+  const colHSN = 65;
+  const colQTY = 50;
+  const colRate = 70;
+  const colAmt = 80;
+  const colDesc = contentW - colSN - colHSN - colQTY - colRate - colAmt;
+  const thH = 22;
+
+  let tx = M;
+  const colStarts = [
+    tx,
+    tx + colSN,
+    tx + colSN + colDesc,
+    tx + colSN + colDesc + colHSN,
+    tx + colSN + colDesc + colHSN + colQTY,
+    tx + colSN + colDesc + colHSN + colQTY + colRate
+  ];
+  const colWidths = [colSN, colDesc, colHSN, colQTY, colRate, colAmt];
+  const colLabels = ["S.N.", "DESCRIPTION", "HSN/SAC", "QTY", "RATE", "AMOUNT"];
+
+  colStarts.forEach((cx, i) => {
+    drawCell(cx, y, colWidths[i], thH, { fill: true, fillColor: [230, 240, 240] });
+  });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(0, 50, 50);
+  colStarts.forEach((cx, i) => {
+    doc.text(colLabels[i], cx + colWidths[i] / 2, y + 14, { align: "center" });
+  });
+
+  y += thH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Item data row
+  // ═══════════════════════════════════════════════════════════════
+  const itemDesc = dealTitle;
+  const descLines = doc.splitTextToSize(String(itemDesc), colDesc - 16);
+  const itemRowH = Math.max(70, descLines.length * 12 + 20);
+
+  colStarts.forEach((cx, i) => drawCell(cx, y, colWidths[i], itemRowH));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(30, 30, 30);
+  doc.text("1", colStarts[0] + colSN / 2, y + 16, { align: "center" });
+  descLines.forEach((line, i) => doc.text(line, colStarts[1] + 8, y + 16 + i * 12));
+  doc.text("1", colStarts[3] + colQTY / 2, y + 16, { align: "center" });
+  if (taxableAmount > 0) {
+    doc.text(inr(taxableAmount), colStarts[4] + colRate - 6, y + 16, { align: "right" });
+    doc.text(inr(taxableAmount), colStarts[5] + colAmt - 6, y + 16, { align: "right" });
+  }
+
+  y += itemRowH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // GST Summary rows
+  // ═══════════════════════════════════════════════════════════════
+  const summX = colStarts[4];
+  const summLabelW = colRate;
+  const summAmtW = colAmt;
+  const leftSpanW = colSN + colDesc + colHSN + colQTY;
+
+  const summaryRows = [
+    { label: "TAXABLE AMOUNT", amount: taxableAmount },
+    { label: `CGST @${cgstRate}%`, amount: cgstAmt },
+    { label: `SGST @${sgstRate}%`, amount: sgstAmt },
+    { label: "TOTAL (ROUNDED)", amount: totalRounded, bold: true, icon: true }
   ];
 
-  left.forEach((line, i) => doc.text(String(line), M, y + 18 + i * 16));
-  right.forEach((line, i) => doc.text(String(line), W / 2, y + 18 + i * 16));
+  const leftLabels = [
+    "",
+    `GST Amount : ${numberToWordsINR(gstTotal)}`,
+    "",
+    `Invoice Value : ${numberToWordsINR(totalRounded)}`
+  ];
 
-  y = y + 20 + Math.max(left.length, right.length) * 16 + 18;
+  summaryRows.forEach((row, i) => {
+    const rowH = 20;
+    drawCell(M, y, leftSpanW, rowH);
+    drawCell(summX, y, summLabelW, rowH, row.bold ? { fill: true, fillColor: [230, 240, 240] } : {});
+    drawCell(summX + summLabelW, y, summAmtW, rowH);
 
-  // Payment status badge line
+    if (leftLabels[i]) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(30, 30, 30);
+      doc.text(leftLabels[i], M + 8, y + 13);
+    }
+
+    doc.setFont("helvetica", row.bold ? "bold" : "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(0, 50, 50);
+    doc.text(row.label, summX + 6, y + 13);
+
+    if (row.icon) {
+      doc.setTextColor(0, 77, 77);
+      doc.setFont("helvetica", "bold");
+      doc.text("\u20B9", summX + summLabelW + summAmtW - 8, y + 13, { align: "right" });
+    }
+
+    if (row.amount > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(30, 30, 30);
+      const amtStr = row.icon ? String(row.amount.toLocaleString("en-IN")) : inr(row.amount);
+      doc.text(amtStr, summX + summLabelW + summAmtW - (row.icon ? 14 : 6), y + 13, { align: "right" });
+    }
+
+    y += rowH;
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // Bank Details (left) | Grand Total / Deal / Bill (right)
+  // ═══════════════════════════════════════════════════════════════
+  const bankSectionH = 120;
+  const totalsW = summLabelW + summAmtW;
+
+  drawCell(M, y, leftSpanW, bankSectionH);
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Payment Status:", M, y);
-  
+  doc.setFontSize(8);
+  doc.setTextColor(0, 77, 77);
+  doc.text("BANK ACCOUNT DETAILS", M + 8, y + 16);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(30, 30, 30);
+
+  const bankLines = [
+    ["Account Name", BANK_DETAILS.companyName],
+    ["Bank Name", BANK_DETAILS.bankName],
+    ["Account No.", BANK_DETAILS.accountNumber],
+    ["IFSC Code", BANK_DETAILS.ifsc],
+    ["SWIFT Code", BANK_DETAILS.swift],
+    ["Branch Name", BANK_DETAILS.branch]
+  ];
+
+  let by = y + 30;
+  bankLines.forEach(([lbl, val]) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(lbl, M + 8, by);
+    doc.setFont("helvetica", "normal");
+    doc.text(`: ${val}`, M + 78, by);
+    by += 13;
+  });
+
+  by += 4;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("Payment Status :", M + 8, by);
   if (paymentStatus === "PAID") {
-    doc.setTextColor(22, 101, 52); // Green
-    doc.text(`PAID (Method: ${paymentMethod})`, M + 95, y);
+    doc.setTextColor(22, 163, 74);
+    doc.text("FULLY PAID", M + 90, by);
   } else if (paymentStatus === "PARTIAL") {
-    doc.setTextColor(194, 65, 12); // Orange
-    doc.text(`PARTIAL PAYMENT (Method: ${paymentMethod})`, M + 95, y);
+    doc.setTextColor(234, 88, 12);
+    doc.text("PARTIALLY PAID", M + 90, by);
   } else {
-    doc.setTextColor(185, 28, 28); // Red
-    doc.text(`PENDING (Payment Method: ${paymentMethod})`, M + 95, y);
-  }
-  doc.setTextColor(30, 41, 59);
-
-  y += 24;
-
-  // Table header
-  doc.setFillColor(241, 245, 249);
-  doc.rect(M, y, W - M * 2, 28, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Description of Service / Product", M + 12, y + 18);
-  doc.text("Amount (INR)", W - M - 12, y + 18, { align: "right" });
-
-  y += 28;
-
-  // Line item
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const desc = doc.splitTextToSize(String(item), W - M * 2 - 140);
-  const rowH = Math.max(32, desc.length * 14 + 16);
-  desc.forEach((line, i) => doc.text(line, M + 12, y + 18 + i * 14));
-  doc.text(inr(saleAmount), W - M - 12, y + 18, { align: "right" });
-
-  y += rowH;
-  doc.setDrawColor(226, 232, 240);
-  doc.line(M, y, W - M, y);
-  y += 18;
-
-  // Summary box
-  const summaryX = W - M - 200;
-  const valX = W - M - 12;
-
-  doc.setFontSize(10);
-  doc.text("Subtotal:", summaryX, y);
-  doc.text(inr(saleAmount), valX, y, { align: "right" });
-  y += 18;
-
-  if (discount > 0) {
     doc.setTextColor(220, 38, 38);
-    doc.text("Discount:", summaryX, y);
-    doc.text(`- ${inr(discount)}`, valX, y, { align: "right" });
-    doc.setTextColor(30, 41, 59);
-    y += 18;
+    doc.text("PENDING", M + 90, by);
   }
+  doc.setTextColor(30, 30, 30);
 
-  if (tax > 0) {
-    doc.text("GST / Taxes:", summaryX, y);
-    doc.text(`+ ${inr(tax)}`, valX, y, { align: "right" });
-    y += 18;
-  }
-
-  doc.setDrawColor(203, 213, 225);
-  doc.line(summaryX, y, W - M, y);
-  y += 14;
-
+  // Right side — Grand TOTAL
+  const totalRowH = 30;
+  const grandTotalY = y;
+  drawCell(summX, grandTotalY, totalsW, totalRowH);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("Total Payable:", summaryX, y + 2);
-  doc.text(inr(finalAmount), valX, y + 2, { align: "right" });
+  doc.setFontSize(9);
+  doc.setTextColor(0, 50, 50);
+  doc.text("Grand TOTAL", summX + 6, grandTotalY + 13);
+  doc.setTextColor(0, 77, 77);
+  doc.text("\u20B9", summX + totalsW - 8, grandTotalY + 13, { align: "right" });
+  doc.setTextColor(30, 30, 30);
+  doc.text(String(totalRounded.toLocaleString("en-IN")), summX + totalsW - 14, grandTotalY + 13, { align: "right" });
 
-  y += 35;
-
-  // Bank Details on Invoice
+  // TOTAL PROJECT DEAL
+  const dealRowY = grandTotalY + totalRowH;
+  drawCell(summX, dealRowY, totalsW, totalRowH + 6);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Bank Account Details:", M, y);
-  y += 14;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(`Account Name: ${BANK_DETAILS.companyName}`, M, y);
-  y += 12;
-  doc.text(`Bank: ${BANK_DETAILS.bankName} | A/C: ${BANK_DETAILS.accountNumber}`, M, y);
-  y += 12;
-  doc.text(`IFSC: ${BANK_DETAILS.ifsc} | Branch: ${BANK_DETAILS.branch}`, M, y);
-  y += 24;
+  doc.setFontSize(8);
+  doc.setTextColor(0, 50, 50);
+  doc.text("TOTAL PROJECT", summX + 6, dealRowY + 11);
+  doc.text("DEAL :", summX + 6, dealRowY + 22);
+  doc.setTextColor(0, 77, 77);
+  doc.text("\u20B9", summX + totalsW - 8, dealRowY + 17, { align: "right" });
+  doc.setTextColor(30, 30, 30);
+  doc.text(String(dealAmount.toLocaleString("en-IN")), summX + totalsW - 14, dealRowY + 17, { align: "right" });
 
-  // Footer notes & terms
+  // Current Bill Amount
+  const billRowY = dealRowY + totalRowH + 6;
+  const billRowH = bankSectionH - totalRowH - (totalRowH + 6);
+  drawCell(summX, billRowY, totalsW, billRowH);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(0, 50, 50);
+  doc.text("Current Bill Amount :", summX + 6, billRowY + 14);
+  doc.setTextColor(0, 77, 77);
+  doc.text("\u20B9", summX + totalsW - 8, billRowY + 14, { align: "right" });
+  doc.setTextColor(30, 30, 30);
+  doc.text(String(finalAmount.toLocaleString("en-IN")), summX + totalsW - 14, billRowY + 14, { align: "right" });
+
+  y += bankSectionH;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Footer
+  // ═══════════════════════════════════════════════════════════════
+  y += 16;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text("Terms & Notes:", M, y);
-  y += 14;
-  doc.text("1. All payments are non-refundable unless specified in master agreement.", M, y);
-  y += 12;
-  doc.text("2. Payments can be completed using NEFT/RTGS, UPI, or Corporate Cards.", M, y);
-  y += 12;
-  doc.text("3. This is a system-generated invoice generated through Qiro CRM.", M, y);
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  doc.text("This is a system-generated invoice by Qiro CRM. Subject to Pune, Maharashtra jurisdiction.", M, y);
+  y += 10;
+  doc.text("Terms: Payment is due as per agreed commercial terms. All disputes subject to Pune jurisdiction.", M, y);
 
   return doc;
 }
