@@ -135,6 +135,7 @@ export function buildDynamicQuotationPdf(quotation) {
   const H = doc.internal.pageSize.getHeight();
   const M = 40; // Clean 40pt margin for A4 (515.28 pt content width)
   const contentW = W - M * 2;
+  const halfW = contentW / 2;
   const bottomLimit = H - 50;
 
   const raw = quotation?.raw ?? quotation ?? {};

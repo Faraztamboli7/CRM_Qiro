@@ -919,21 +919,30 @@ export default function Quotations() {
   const sentCount = quotations.filter((q) => q.status === "SENT").length;
 
   const handleDownloadPdf = (q) => {
-    const doc = buildDynamicQuotationPdf(q);
-    doc.save(`Quotation-${q.quotation_number || "Doc"}.pdf`);
+    try {
+      const doc = buildDynamicQuotationPdf(q);
+      doc.save(`Quotation-${q.quotation_number || "Doc"}.pdf`);
+      setFeedback({ type: "success", message: `Quotation PDF #${q.quotation_number} downloaded.` });
+    } catch (err) {
+      setFeedback({ type: "error", message: err.message || "Failed to download quotation PDF" });
+    }
   };
 
   const handleSendEmail = async (q) => {
     setSendingId(q.id);
     setFeedback(null);
     try {
+      const targetEmail = q.customer_email || q.client_details?.email;
+      if (!targetEmail) {
+        throw new Error("No recipient email found for this quotation. Please edit the quotation and add an email.");
+      }
       const doc = buildDynamicQuotationPdf(q);
       const pdfBase64 = doc.output("datauristring");
       await crud.quotations.sendEmail(q.id, {
         pdf_base64: pdfBase64,
-        recipient_email: q.customer_email || q.client_details?.email
+        recipient_email: targetEmail
       });
-      setFeedback({ type: "success", message: `Quotation sent successfully to ${q.customer_email}!` });
+      setFeedback({ type: "success", message: `Quotation sent successfully to ${targetEmail}!` });
     } catch (err) {
       setFeedback({ type: "error", message: err.message || "Failed to send quotation email" });
     } finally {
