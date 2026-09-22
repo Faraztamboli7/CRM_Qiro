@@ -216,74 +216,42 @@ export function buildDynamicQuotationPdf(quotation) {
   doc.setFontSize(15);
   doc.text("QUOTATION", W / 2, y, { align: "center" });
 
-  // ═══════════════════════════════════════════════════════════════
-  // STRUCTURED METADATA CARD (Client Details & Quotation Info)
-  // ═══════════════════════════════════════════════════════════════
-  y += 16;
-  const metaBoxH = 70;
-  const halfW = contentW / 2;
-
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.5);
-  doc.setFillColor(248, 250, 252);
-  doc.rect(M, y, contentW, metaBoxH, "FD");
-  doc.line(M + halfW, y, M + halfW, y + metaBoxH);
-
-  // Left Column: Client Details
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  doc.text("QUOTATION FOR", M + 12, y + 14);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
+  // Quotation For (Left) & Metadata (Right) — matching reference image exactly
+  y += 26;
   doc.setTextColor(19, 78, 123);
-  doc.text(String(clientCompany || clientName).toUpperCase(), M + 12, y + 28);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Quotation for:", M, y);
+
+  if (clientCompany) {
+    doc.setTextColor(19, 78, 123);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(clientCompany, W - M, y, { align: "right" });
+  }
+
+  y += 15;
+  doc.setTextColor(30, 41, 59);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(clientName, M, y);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(51, 65, 85);
-  if (clientCompany && clientName && clientName !== clientCompany) {
-    doc.text(`Attn: ${clientName}`, M + 12, y + 42);
-    doc.text(`${clientCity}${client.phone ? " | " + client.phone : ""}`, M + 12, y + 56);
-  } else {
-    doc.text(clientCity, M + 12, y + 42);
-    const contactLine = [client.phone, client.email].filter(Boolean).join(" | ");
-    if (contactLine) {
-      doc.text(contactLine, M + 12, y + 56);
-    }
-  }
+  doc.setFontSize(10);
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Date: ${qDate}`, W - M, y, { align: "right" });
 
-  // Right Column: Quotation Metadata
+  y += 14;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(71, 85, 105);
+  doc.text(clientCity, M, y);
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  doc.text("QUOTATION DETAILS", M + halfW + 12, y + 14);
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Quotation #: ${qNum}`, W - M, y, { align: "right" });
 
-  const rightMeta = [
-    { label: "Quotation No :", val: qNum },
-    { label: "Date :", val: qDate },
-    { label: "Type :", val: qType.replace(" Quotation", "") }
-  ];
-  if (raw.valid_until) {
-    rightMeta.push({
-      label: "Valid Until :",
-      val: new Date(raw.valid_until).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-    });
-  }
-
-  rightMeta.forEach((rm, idx) => {
-    const rmy = y + 28 + idx * 13;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text(rm.label, M + halfW + 12, rmy);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(19, 78, 123);
-    doc.text(String(rm.val), M + halfW + 85, rmy);
-  });
-
-  y += metaBoxH + 26;
+  y += 30;
 
   // Subject Banner (Centered in the middle like originally)
   doc.setTextColor(19, 78, 123);
