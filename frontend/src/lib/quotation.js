@@ -283,16 +283,14 @@ export function buildDynamicQuotationPdf(quotation) {
     doc.text(String(rm.val), M + halfW + 85, rmy);
   });
 
-  y += metaBoxH + 16;
+  y += metaBoxH + 26;
 
-  // Subject Banner Box
-  doc.setFillColor(241, 245, 249);
-  doc.rect(M, y, contentW, 22, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  // Subject Banner (Centered in the middle like originally)
   doc.setTextColor(19, 78, 123);
-  doc.text(`Subject : ${qSubject}`, M + 10, y + 15);
-  y += 30;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13.5);
+  doc.text(`Subject : ${qSubject}`, W / 2, y, { align: "center" });
+  y += 24;
 
   // Salutation & Intro
   doc.setTextColor(51, 65, 85);
