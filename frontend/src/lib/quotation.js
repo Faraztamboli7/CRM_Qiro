@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { QIRO_LOGO_BASE64 } from "./qiroLogo.js";
 
 /* ------------------------------------------------------------------ */
 /* Quotation attachments                                               */
@@ -178,25 +179,12 @@ export function buildDynamicQuotationPdf(quotation) {
   // PAGE 1: HEADER & LOGO
   // ═══════════════════════════════════════════════════════════════
 
-  // Qiro Logo Icon
-  doc.setDrawColor(23, 132, 214);
-  doc.setLineWidth(5);
-  doc.circle(W / 2 - 110, y + 20, 13, "S");
-  doc.setFillColor(23, 132, 214);
-  doc.rect(W / 2 - 104, y + 17, 12, 4.5, "F");
-
-  // Company Name
-  doc.setTextColor(19, 78, 123);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(19);
-  doc.text("QIRO TECH", W / 2 - 86, y + 18);
-
-  doc.setTextColor(60, 150, 220);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12.5);
-  doc.text("Innovation Pvt. Ltd.", W / 2 - 86, y + 33);
-
-  y += 54;
+  // Official Qiro Tech Logo Image (exact official symbol & typography)
+  const logoW = 185;
+  const logoH = 55.4;
+  const logoX = (W - logoW) / 2;
+  doc.addImage(QIRO_LOGO_BASE64, "PNG", logoX, y, logoW, logoH);
+  y += logoH + 8;
 
   // Tagline / Contact bar
   doc.setTextColor(71, 85, 105);
