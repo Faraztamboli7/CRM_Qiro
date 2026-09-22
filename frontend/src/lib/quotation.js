@@ -196,32 +196,32 @@ export function buildDynamicQuotationPdf(quotation) {
   doc.setFontSize(12.5);
   doc.text("Innovation Pvt. Ltd.", W / 2 - 86, y + 33);
 
-  y += 50;
+  y += 54;
 
   // Tagline / Contact bar
   doc.setTextColor(71, 85, 105);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(9);
   doc.text(COMPANY_DETAILS.headerTagline, W / 2, y, { align: "center" });
 
-  // Divider line
-  y += 8;
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.75);
+  // Divider line (thick dark line matching reference image)
+  y += 12;
+  doc.setDrawColor(30, 41, 59);
+  doc.setLineWidth(1.2);
   doc.line(M, y, W - M, y);
 
   // QUOTATION Title Banner
-  y += 24;
+  y += 34;
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.text("QUOTATION", W / 2, y, { align: "center" });
 
   // Quotation For (Left) & Metadata (Right) — matching reference image exactly
-  y += 26;
+  y += 38;
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(11.5);
   doc.text("Quotation for:", M, y);
 
   if (clientCompany) {
@@ -231,7 +231,7 @@ export function buildDynamicQuotationPdf(quotation) {
     doc.text(clientCompany, W - M, y, { align: "right" });
   }
 
-  y += 15;
+  y += 18;
   doc.setTextColor(30, 41, 59);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -242,7 +242,7 @@ export function buildDynamicQuotationPdf(quotation) {
   doc.setTextColor(30, 41, 59);
   doc.text(`Date: ${qDate}`, W - M, y, { align: "right" });
 
-  y += 14;
+  y += 16;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(71, 85, 105);
@@ -252,35 +252,38 @@ export function buildDynamicQuotationPdf(quotation) {
   doc.setTextColor(30, 41, 59);
   doc.text(`Quotation #: ${qNum}`, W - M, y, { align: "right" });
 
-  y += 30;
+  // Spacious gap before Subject (matching reference image)
+  y += 68;
 
-  // Subject Banner (Centered in the middle like originally)
+  // Subject Banner (Centered in the middle like reference image)
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13.5);
-  doc.text(`Subject : ${qSubject}`, W / 2, y, { align: "center" });
-  y += 24;
+  doc.setFontSize(14);
+  doc.text(`Subject :  ${qSubject}`, W / 2, y, { align: "center" });
 
-  // Salutation & Intro
-  doc.setTextColor(51, 65, 85);
+  // Spacious gap before Salutation
+  y += 50;
+
+  // Salutation & Intro (matching reference image)
+  doc.setTextColor(30, 41, 59);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.text("Dear Sir / Madam,", M, y);
-  y += 14;
-  const introMsg = `With reference to your enquiry regarding requirements for ${qType.replace(" Quotation", "")} services dated ${qDate},`;
-  doc.text(introMsg, M, y);
-  y += 13;
-  doc.text("we are pleased to submit our comprehensive commercial proposal for your kind review and consideration:", M, y);
+  doc.setFontSize(10.5);
+  doc.text("Dear Sir,", M, y);
   y += 18;
+  const introMsg = `Subject: - Your enquiry for requirement for ${qType.replace(" Quotation", "")} service. Dated on ${qDate}.`;
+  doc.text(introMsg, M, y);
+  y += 16;
+  doc.text("Thank you for showing interest in our Services & contacting us. Please find our exclusive quotation for your requirement", M, y);
+  y += 34;
 
   // ═══════════════════════════════════════════════════════════════
-  // STRUCTURED PRODUCTS / SERVICES TABLE (STRICT BOUNDARIES)
+  // STRUCTURED PRODUCTS / SERVICES TABLE (PROPORTIONAL FULL-PAGE FILL)
   // ═══════════════════════════════════════════════════════════════
   const colSr = 28;
-  const colDesc = 125;
+  const colDesc = 105;
   const colTech = 95;
-  const colDeliv = 135;
-  const colPrice = 64;
+  const colDeliv = 155;
+  const colPrice = 65;
   const colTotal = contentW - (colSr + colDesc + colTech + colDeliv + colPrice);
 
   const colStarts = [
@@ -294,8 +297,8 @@ export function buildDynamicQuotationPdf(quotation) {
   ];
 
   const thY = y;
-  const thH = 26;
-  doc.setFillColor(19, 78, 123); // Corporate Qiro navy blue
+  const thH = 28;
+  doc.setFillColor(15, 96, 125); // Teal / Dark petrol blue from reference
   doc.rect(M, thY, contentW, thH, "F");
 
   // Subtle vertical dividing lines in header
@@ -309,12 +312,16 @@ export function buildDynamicQuotationPdf(quotation) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
 
-  doc.text("Sr. No.", colStarts[0] + colSr / 2, thY + 16, { align: "center" });
-  doc.text("Product Description", colStarts[1] + 6, thY + 16);
-  doc.text("Technology", colStarts[2] + 6, thY + 16);
-  doc.text("Deliverables", colStarts[3] + 6, thY + 16);
-  doc.text("Price / Unit", colStarts[4] + colPrice - 6, thY + 16, { align: "right" });
-  doc.text("Total Amount", colStarts[5] + colTotal - 6, thY + 16, { align: "right" });
+  doc.text("Sr.", colStarts[0] + colSr / 2, thY + 11, { align: "center" });
+  doc.text("No.", colStarts[0] + colSr / 2, thY + 22, { align: "center" });
+
+  doc.text("Product", colStarts[1] + 6, thY + 11);
+  doc.text("Description", colStarts[1] + 6, thY + 22);
+
+  doc.text("Technology", colStarts[2] + 6, thY + 17);
+  doc.text("Deliverables", colStarts[3] + 6, thY + 17);
+  doc.text("Price / Unit", colStarts[4] + colPrice / 2, thY + 17, { align: "center" });
+  doc.text("Total Amount", colStarts[5] + colTotal - 6, thY + 17, { align: "right" });
 
   y += thH;
 
@@ -364,12 +371,12 @@ export function buildDynamicQuotationPdf(quotation) {
 
   const defaultGeneralItems = [
     {
-      description: raw.product_service || "Web Application Development",
-      technology: "React, Next.js, Modern Stack",
-      deliverables: "1) Hosting Setup\n2) Domain\n3) SSL Certificate\n4) Production Handover",
+      description: raw.product_service || "Digital Marketing",
+      technology: "1) Adobe Tool\n2) Canva",
+      deliverables: "1) Static Posts (12 Per Month)\n2) Reels (4 Per Month)",
       quantity: 1,
-      unit_price: raw.total_amount || 25000,
-      total: raw.total_amount || 25000
+      unit_price: raw.total_amount || 15000,
+      total: raw.total_amount || 15000
     }
   ];
 
@@ -377,21 +384,18 @@ export function buildDynamicQuotationPdf(quotation) {
     ? items
     : (qType === "Software Quotation" ? defaultSoftwareItems : defaultGeneralItems);
 
+  // Dynamic row height so table elegantly fills Page 1 matching reference
+  const minRowH = itemsToRender.length === 1 ? 95 : itemsToRender.length === 2 ? 65 : 42;
+
   itemsToRender.forEach((it, idx) => {
     const descLines = doc.splitTextToSize(String(it.description || ""), colDesc - 12);
     const techLines = doc.splitTextToSize(String(it.technology || "—"), colTech - 12);
     const delivLines = doc.splitTextToSize(String(it.deliverables || "—"), colDeliv - 12);
 
     const maxLines = Math.max(descLines.length, techLines.length, delivLines.length, 1);
-    const rowHeight = Math.max(26, maxLines * 12 + 12);
+    const rowHeight = Math.max(minRowH, maxLines * 14 + 20);
 
     checkPageBreak(rowHeight + 35);
-
-    // Alternating subtle background
-    if (idx % 2 === 1) {
-      doc.setFillColor(250, 252, 254);
-      doc.rect(M, y, contentW, rowHeight, "F");
-    }
 
     // Outer row borders
     doc.setDrawColor(203, 213, 225);
@@ -403,83 +407,75 @@ export function buildDynamicQuotationPdf(quotation) {
       doc.line(x, y, x, y + rowHeight);
     });
 
-    // Content text
+    // Content text with vertical centering
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(30, 41, 59);
 
-    doc.text(String(idx + 1), colStarts[0] + colSr / 2, y + 14, { align: "center" });
-    descLines.forEach((l, i) => doc.text(l, colStarts[1] + 6, y + 13 + i * 11));
-    techLines.forEach((l, i) => doc.text(l, colStarts[2] + 6, y + 13 + i * 11));
-    delivLines.forEach((l, i) => doc.text(l, colStarts[3] + 6, y + 13 + i * 11));
+    doc.text(String(idx + 1), colStarts[0] + colSr / 2, y + rowHeight / 2 + 3.5, { align: "center" });
+
+    const descTop = y + (rowHeight - descLines.length * 13) / 2 + 10;
+    descLines.forEach((l, i) => doc.text(l, colStarts[1] + 6, descTop + i * 13));
+
+    const techTop = y + (rowHeight - techLines.length * 13) / 2 + 10;
+    techLines.forEach((l, i) => doc.text(l, colStarts[2] + 6, techTop + i * 13));
+
+    const delivTop = y + (rowHeight - delivLines.length * 13) / 2 + 10;
+    delivLines.forEach((l, i) => doc.text(l, colStarts[3] + 6, delivTop + i * 13));
 
     const priceText = inr(it.unit_price) + (it.quantity > 1 ? ` (x${it.quantity})` : "");
-    doc.text(priceText, colStarts[4] + colPrice - 6, y + 14, { align: "right" });
-    doc.text(inr(it.total), colStarts[5] + colTotal - 6, y + 14, { align: "right" });
+    doc.text(priceText, colStarts[4] + colPrice / 2, y + rowHeight / 2 + 3.5, { align: "center" });
+
+    doc.text(inr(it.total), colStarts[5] + colTotal - 6, y + rowHeight / 2 + 3.5, { align: "right" });
 
     y += rowHeight;
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // STRUCTURED TOTALS SECTION (BOUNDED & PERFECTLY ALIGNED)
+  // STRUCTURED TOTALS SECTION (MATCHING REFERENCE IMAGE)
   // ═══════════════════════════════════════════════════════════════
-  const totalsW = colPrice + colTotal;
-  const labelsW = contentW - totalsW; // exactly aligns with colStarts[4]
-
   checkPageBreak(90);
 
   // Subtotal Row
+  const subTotalH = 34;
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.5);
-  doc.setFillColor(248, 250, 252);
-  doc.rect(M, y, labelsW, 22, "FD");
-  doc.rect(M + labelsW, y, totalsW, 22, "S");
+  doc.rect(M, y, contentW - colTotal, subTotalH, "S");
+  doc.rect(colStarts[5], y, colTotal, subTotalH, "S");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(9.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("Sub Total :", M + labelsW - 10, y + 14, { align: "right" });
-  doc.text(inr(pricing.subtotal), M + contentW - 8, y + 14, { align: "right" });
-  y += 22;
+  doc.text("Sub Total :", colStarts[5] - 12, y + subTotalH / 2 + 3.5, { align: "right" });
+  doc.text(inr(pricing.subtotal), M + contentW - 8, y + subTotalH / 2 + 3.5, { align: "right" });
+  y += subTotalH;
 
   // Discount Row (if any)
   if (pricing.discount > 0) {
-    doc.setFillColor(248, 250, 252);
-    doc.rect(M, y, labelsW, 20, "FD");
-    doc.rect(M + labelsW, y, totalsW, 20, "S");
+    const discountH = 28;
+    doc.rect(M, y, contentW - colTotal, discountH, "S");
+    doc.rect(colStarts[5], y, colTotal, discountH, "S");
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
+    doc.setFontSize(9);
     doc.setTextColor(220, 38, 38);
-    doc.text("Discount :", M + labelsW - 10, y + 13, { align: "right" });
-    doc.text(`- ${inr(pricing.discount)}`, M + contentW - 8, y + 13, { align: "right" });
-    y += 20;
+    doc.text("Discount :", colStarts[5] - 12, y + discountH / 2 + 3.5, { align: "right" });
+    doc.text(`- ${inr(pricing.discount)}`, M + contentW - 8, y + discountH / 2 + 3.5, { align: "right" });
+    y += discountH;
   }
 
-  // Tax / GST Row
-  doc.setFillColor(248, 250, 252);
-  doc.rect(M, y, labelsW, 20, "FD");
-  doc.rect(M + labelsW, y, totalsW, 20, "S");
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(51, 65, 85);
-  doc.text(`GST (${pricing.tax_rate ?? 18}%) :`, M + labelsW - 10, y + 13, { align: "right" });
-  doc.text(inr(pricing.tax_amount), M + contentW - 8, y + 13, { align: "right" });
-  y += 20;
-
-  // Grand Total Row (Highlighted in Soft Corporate Blue)
-  doc.setFillColor(235, 243, 250);
-  doc.rect(M, y, labelsW, 25, "FD");
-  doc.rect(M + labelsW, y, totalsW, 25, "FD");
+  // Grand Total Row (matching reference image: "(Including 18% GST ) Grand Total :")
+  const grandTotalH = 38;
+  doc.rect(M, y, contentW - colTotal, grandTotalH, "S");
+  doc.rect(colStarts[5], y, colTotal, grandTotalH, "S");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(19, 78, 123);
-  doc.text("Grand Total :", M + labelsW - 10, y + 16, { align: "right" });
+  doc.text(`(Including ${pricing.tax_rate ?? 18}% GST ) Grand Total :`, colStarts[5] - 12, y + grandTotalH / 2 + 3.5, { align: "right" });
   doc.setFontSize(10.5);
-  doc.text(inr(pricing.grand_total), M + contentW - 8, y + 16, { align: "right" });
-  y += 35;
+  doc.text(inr(pricing.grand_total), M + contentW - 8, y + grandTotalH / 2 + 3.5, { align: "right" });
+  y += grandTotalH;
 
   // ═══════════════════════════════════════════════════════════════
   // PAGE 2+: SCOPE OF WORK (SOW)
