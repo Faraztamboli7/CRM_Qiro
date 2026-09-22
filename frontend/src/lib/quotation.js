@@ -126,16 +126,16 @@ export const COMPANY_DETAILS = {
 };
 
 /**
- * Builds the comprehensive, corporate Multi-page Quotation PDF exactly matching
- * the reference documents (Qiro Website Proposal, Digital Marketing Quotation).
+ * Builds the comprehensive, corporate Multi-page Quotation PDF strictly formatted inside
+ * structural borders, with zero margin overflow, matching the corporate reference documents.
  */
 export function buildDynamicQuotationPdf(quotation) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
-  const M = 48;
+  const M = 40; // Clean 40pt margin for A4 (515.28 pt content width)
   const contentW = W - M * 2;
-  const bottomLimit = H - 55;
+  const bottomLimit = H - 50;
 
   const raw = quotation?.raw ?? quotation ?? {};
   const client = raw.client_details ?? {};
@@ -161,274 +161,398 @@ export function buildDynamicQuotationPdf(quotation) {
   const qType = raw.quotation_type || "Quotation";
   const qSubject = raw.subject || `Quotation for ${qType.replace(" Quotation", "")}`;
 
-  // Helper for adding new page with header
+  let y = 32;
+
+  // Helper for adding new page with consistent margin
   function checkPageBreak(requiredHeight) {
     if (y + requiredHeight > bottomLimit) {
       doc.addPage();
-      y = 54;
+      y = 45;
       return true;
     }
     return false;
   }
 
-  // --- PAGE 1: HEADER & LOGO ---
-  let y = 35;
+  // ═══════════════════════════════════════════════════════════════
+  // PAGE 1: HEADER & LOGO
+  // ═══════════════════════════════════════════════════════════════
 
-  // Qiro Logo Icon (Circle with notch style representation)
+  // Qiro Logo Icon
   doc.setDrawColor(23, 132, 214);
   doc.setLineWidth(5);
-  doc.circle(W / 2 - 110, y + 22, 14, "S");
+  doc.circle(W / 2 - 110, y + 20, 13, "S");
   doc.setFillColor(23, 132, 214);
-  doc.rect(W / 2 - 104, y + 18, 12, 5, "F");
+  doc.rect(W / 2 - 104, y + 17, 12, 4.5, "F");
 
   // Company Name
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("QIRO TECH", W / 2 - 85, y + 20);
+  doc.setFontSize(19);
+  doc.text("QIRO TECH", W / 2 - 86, y + 18);
 
   doc.setTextColor(60, 150, 220);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(13);
-  doc.text("Innovation Pvt. Ltd.", W / 2 - 85, y + 36);
+  doc.setFontSize(12.5);
+  doc.text("Innovation Pvt. Ltd.", W / 2 - 86, y + 33);
 
-  y += 58;
+  y += 50;
 
   // Tagline / Contact bar
-  doc.setTextColor(51, 65, 85);
+  doc.setTextColor(71, 85, 105);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.text(COMPANY_DETAILS.headerTagline, W / 2, y, { align: "center" });
 
   // Divider line
-  y += 10;
+  y += 8;
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.75);
   doc.line(M, y, W - M, y);
 
-  // QUOTATION Title
-  y += 30;
+  // QUOTATION Title Banner
+  y += 24;
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.text("QUOTATION", W / 2, y, { align: "center" });
 
-  // Quotation For (Left) & Metadata (Right)
-  y += 28;
-  doc.setTextColor(19, 78, 123);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("Quotation for:", M, y);
+  // ═══════════════════════════════════════════════════════════════
+  // STRUCTURED METADATA CARD (Client Details & Quotation Info)
+  // ═══════════════════════════════════════════════════════════════
+  y += 16;
+  const metaBoxH = 70;
+  const halfW = contentW / 2;
 
-  if (clientCompany) {
-    doc.setTextColor(19, 78, 123);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(clientCompany, W - M, y, { align: "right" });
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(M, y, contentW, metaBoxH, "FD");
+  doc.line(M + halfW, y, M + halfW, y + metaBoxH);
+
+  // Left Column: Client Details
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text("QUOTATION FOR", M + 12, y + 14);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(19, 78, 123);
+  doc.text(String(clientCompany || clientName).toUpperCase(), M + 12, y + 28);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(51, 65, 85);
+  if (clientCompany && clientName && clientName !== clientCompany) {
+    doc.text(`Attn: ${clientName}`, M + 12, y + 42);
+    doc.text(`${clientCity}${client.phone ? " | " + client.phone : ""}`, M + 12, y + 56);
+  } else {
+    doc.text(clientCity, M + 12, y + 42);
+    const contactLine = [client.phone, client.email].filter(Boolean).join(" | ");
+    if (contactLine) {
+      doc.text(contactLine, M + 12, y + 56);
+    }
   }
 
-  y += 15;
-  doc.setTextColor(30, 41, 59);
+  // Right Column: Quotation Metadata
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(clientName, M, y);
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text("QUOTATION DETAILS", M + halfW + 12, y + 14);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Date: ${qDate}`, W - M, y, { align: "right" });
+  const rightMeta = [
+    { label: "Quotation No :", val: qNum },
+    { label: "Date :", val: qDate },
+    { label: "Type :", val: qType.replace(" Quotation", "") }
+  ];
+  if (raw.valid_until) {
+    rightMeta.push({
+      label: "Valid Until :",
+      val: new Date(raw.valid_until).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    });
+  }
 
-  y += 14;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(71, 85, 105);
-  doc.text(clientCity, M, y);
+  rightMeta.forEach((rm, idx) => {
+    const rmy = y + 28 + idx * 13;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(rm.label, M + halfW + 12, rmy);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(19, 78, 123);
+    doc.text(String(rm.val), M + halfW + 85, rmy);
+  });
 
+  y += metaBoxH + 16;
+
+  // Subject Banner Box
+  doc.setFillColor(241, 245, 249);
+  doc.rect(M, y, contentW, 22, "F");
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(30, 41, 59);
-  doc.text(`Quotation #: ${qNum}`, W - M, y, { align: "right" });
-
-  // Subject Banner
-  y += 35;
+  doc.setFontSize(10);
   doc.setTextColor(19, 78, 123);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(`Subject : ${qSubject}`, W / 2, y, { align: "center" });
+  doc.text(`Subject : ${qSubject}`, M + 10, y + 15);
+  y += 30;
 
   // Salutation & Intro
-  y += 26;
   doc.setTextColor(51, 65, 85);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
-  doc.text("Dear Sir,", M, y);
-  y += 16;
-  const introMsg = `Subject: - Your enquiry for requirement for ${qType.replace(" Quotation", "")} service. Dated on ${qDate}.`;
+  doc.setFontSize(9.5);
+  doc.text("Dear Sir / Madam,", M, y);
+  y += 14;
+  const introMsg = `With reference to your enquiry regarding requirements for ${qType.replace(" Quotation", "")} services dated ${qDate},`;
   doc.text(introMsg, M, y);
-  y += 16;
-  doc.text("Thank you for showing interest in our Services & contacting us. Please find our exclusive quotation for your requirement:", M, y);
-  y += 24;
+  y += 13;
+  doc.text("we are pleased to submit our comprehensive commercial proposal for your kind review and consideration:", M, y);
+  y += 18;
 
-  // --- PRODUCTS / SERVICES TABLE ---
-  const colW = {
-    sr: 32,
-    desc: 115,
-    tech: 105,
-    deliv: 140,
-    price: 60,
-    total: 65
-  };
-  // total = 517 pts ~= contentW (499)
+  // ═══════════════════════════════════════════════════════════════
+  // STRUCTURED PRODUCTS / SERVICES TABLE (STRICT BOUNDARIES)
+  // ═══════════════════════════════════════════════════════════════
+  const colSr = 28;
+  const colDesc = 125;
+  const colTech = 95;
+  const colDeliv = 135;
+  const colPrice = 64;
+  const colTotal = contentW - (colSr + colDesc + colTech + colDeliv + colPrice);
+
+  const colStarts = [
+    M,
+    M + colSr,
+    M + colSr + colDesc,
+    M + colSr + colDesc + colTech,
+    M + colSr + colDesc + colTech + colDeliv,
+    M + colSr + colDesc + colTech + colDeliv + colPrice,
+    M + contentW
+  ];
 
   const thY = y;
-  doc.setFillColor(19, 78, 123); // Dark corporate blue from reference
-  doc.rect(M, thY, contentW, 26, "F");
+  const thH = 26;
+  doc.setFillColor(19, 78, 123); // Corporate Qiro navy blue
+  doc.rect(M, thY, contentW, thH, "F");
+
+  // Subtle vertical dividing lines in header
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  [colStarts[1], colStarts[2], colStarts[3], colStarts[4], colStarts[5]].forEach((x) => {
+    doc.line(x, thY + 3, x, thY + thH - 3);
+  });
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
 
-  let curX = M;
-  doc.text("Sr.", curX + colW.sr / 2, thY + 11, { align: "center" });
-  doc.text("No.", curX + colW.sr / 2, thY + 21, { align: "center" });
-  curX += colW.sr;
+  doc.text("Sr. No.", colStarts[0] + colSr / 2, thY + 16, { align: "center" });
+  doc.text("Product Description", colStarts[1] + 6, thY + 16);
+  doc.text("Technology", colStarts[2] + 6, thY + 16);
+  doc.text("Deliverables", colStarts[3] + 6, thY + 16);
+  doc.text("Price / Unit", colStarts[4] + colPrice - 6, thY + 16, { align: "right" });
+  doc.text("Total Amount", colStarts[5] + colTotal - 6, thY + 16, { align: "right" });
 
-  doc.text("Product", curX + 6, thY + 11);
-  doc.text("Description", curX + 6, thY + 21);
-  curX += colW.desc;
+  y += thH;
 
-  doc.text("Technology", curX + 6, thY + 16);
-  curX += colW.tech;
-
-  doc.text("Deliverables", curX + 6, thY + 16);
-  curX += colW.deliv;
-
-  doc.text("Price / Unit", curX + colW.price / 2, thY + 16, { align: "center" });
-  curX += colW.price;
-
-  doc.text("Total Amount", curX + colW.total - 6, thY + 16, { align: "right" });
-
-  y += 26;
-
-  // Render Table Items
-  const itemsToRender = items.length > 0 ? items : [
+  // Render Table Items with detailed fallback if empty
+  const defaultSoftwareItems = [
     {
-      description: raw.product_service || "Digital Marketing / Software Development",
-      technology: "Adobe Tools, Canva / Modern Tech Stack",
-      deliverables: "Design & Development Deliverables as agreed",
+      description: "UI/UX Design System, Wireframes & Interactive Prototype",
+      technology: "Figma, Tailwind CSS, Responsive Web",
+      deliverables: "1) User Journey Mapping\n2) Clickable High-Fidelity Prototype\n3) Design System & Tokens",
       quantity: 1,
-      unit_price: raw.total_amount || 0,
-      total: raw.total_amount || 0
+      unit_price: 25000,
+      total: 25000
+    },
+    {
+      description: "Core Software Engine & Custom Business Logic Modules",
+      technology: "React.js, Next.js, Node.js, TypeScript",
+      deliverables: "1) Multi-Tier Role RBAC\n2) Central KPI Dashboard\n3) Entity Lifecycle Workflows\n4) System Audit Trail Logs",
+      quantity: 1,
+      unit_price: 65000,
+      total: 65000
+    },
+    {
+      description: "RESTful API Engine, Database Architecture & Security",
+      technology: "PostgreSQL, Express.js, JWT, TLS 1.3",
+      deliverables: "1) Relational DB Modeling\n2) Stateless Token Authentication\n3) Data Encryption at Rest\n4) Automated Daily Backups",
+      quantity: 1,
+      unit_price: 35000,
+      total: 35000
+    },
+    {
+      description: "Third-Party Integrations & Automation Hub",
+      technology: "Webhooks, SMTP, SMS / WhatsApp APIs",
+      deliverables: "1) Payment Gateway (Razorpay/Stripe)\n2) Automated Email & WhatsApp Alerts\n3) Excel & PDF Export Engine",
+      quantity: 1,
+      unit_price: 25000,
+      total: 25000
+    },
+    {
+      description: "DevOps, Cloud Hosting Setup, CI/CD & QA Testing",
+      technology: "Docker, AWS / Vercel Cloud, GitHub Actions",
+      deliverables: "1) Production Cloud Hosting Setup\n2) Automated CI/CD Pipeline\n3) End-to-End QA Testing Audit\n4) Source Code Handover",
+      quantity: 1,
+      unit_price: 20000,
+      total: 20000
     }
   ];
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(30, 41, 59);
+  const defaultGeneralItems = [
+    {
+      description: raw.product_service || "Web Application Development",
+      technology: "React, Next.js, Modern Stack",
+      deliverables: "1) Hosting Setup\n2) Domain\n3) SSL Certificate\n4) Production Handover",
+      quantity: 1,
+      unit_price: raw.total_amount || 25000,
+      total: raw.total_amount || 25000
+    }
+  ];
+
+  const itemsToRender = items.length > 0
+    ? items
+    : (qType === "Software Quotation" ? defaultSoftwareItems : defaultGeneralItems);
 
   itemsToRender.forEach((it, idx) => {
-    const descLines = doc.splitTextToSize(String(it.description || ""), colW.desc - 10);
-    const techLines = doc.splitTextToSize(String(it.technology || "—"), colW.tech - 10);
-    const delivLines = doc.splitTextToSize(String(it.deliverables || "—"), colW.deliv - 10);
+    const descLines = doc.splitTextToSize(String(it.description || ""), colDesc - 12);
+    const techLines = doc.splitTextToSize(String(it.technology || "—"), colTech - 12);
+    const delivLines = doc.splitTextToSize(String(it.deliverables || "—"), colDeliv - 12);
 
     const maxLines = Math.max(descLines.length, techLines.length, delivLines.length, 1);
-    const rowHeight = Math.max(30, maxLines * 13 + 14);
+    const rowHeight = Math.max(26, maxLines * 12 + 12);
 
-    checkPageBreak(rowHeight + 40);
+    checkPageBreak(rowHeight + 35);
 
-    // Row borders
+    // Alternating subtle background
+    if (idx % 2 === 1) {
+      doc.setFillColor(250, 252, 254);
+      doc.rect(M, y, contentW, rowHeight, "F");
+    }
+
+    // Outer row borders
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.5);
-    doc.rect(M, y, contentW, rowHeight);
+    doc.rect(M, y, contentW, rowHeight, "S");
 
-    // Vertical column grid lines
-    let lineX = M;
-    [colW.sr, colW.desc, colW.tech, colW.deliv, colW.price].forEach((w) => {
-      lineX += w;
-      doc.line(lineX, y, lineX, y + rowHeight);
+    // Vertical column lines
+    [colStarts[1], colStarts[2], colStarts[3], colStarts[4], colStarts[5]].forEach((x) => {
+      doc.line(x, y, x, y + rowHeight);
     });
 
-    // Content
-    let textX = M;
-    doc.text(String(idx + 1), textX + colW.sr / 2, y + 16, { align: "center" });
-    textX += colW.sr;
+    // Content text
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 41, 59);
 
-    descLines.forEach((l, i) => doc.text(l, textX + 5, y + 14 + i * 12));
-    textX += colW.desc;
-
-    techLines.forEach((l, i) => doc.text(l, textX + 5, y + 14 + i * 12));
-    textX += colW.tech;
-
-    delivLines.forEach((l, i) => doc.text(l, textX + 5, y + 14 + i * 12));
-    textX += colW.deliv;
+    doc.text(String(idx + 1), colStarts[0] + colSr / 2, y + 14, { align: "center" });
+    descLines.forEach((l, i) => doc.text(l, colStarts[1] + 6, y + 13 + i * 11));
+    techLines.forEach((l, i) => doc.text(l, colStarts[2] + 6, y + 13 + i * 11));
+    delivLines.forEach((l, i) => doc.text(l, colStarts[3] + 6, y + 13 + i * 11));
 
     const priceText = inr(it.unit_price) + (it.quantity > 1 ? ` (x${it.quantity})` : "");
-    doc.text(priceText, textX + colW.price / 2, y + 16, { align: "center" });
-    textX += colW.price;
-
-    doc.text(inr(it.total), textX + colW.total - 6, y + 16, { align: "right" });
+    doc.text(priceText, colStarts[4] + colPrice - 6, y + 14, { align: "right" });
+    doc.text(inr(it.total), colStarts[5] + colTotal - 6, y + 14, { align: "right" });
 
     y += rowHeight;
   });
 
-  // Totals Section
-  const totalsW = colW.price + colW.total;
-  const labelsW = contentW - totalsW;
+  // ═══════════════════════════════════════════════════════════════
+  // STRUCTURED TOTALS SECTION (BOUNDED & PERFECTLY ALIGNED)
+  // ═══════════════════════════════════════════════════════════════
+  const totalsW = colPrice + colTotal;
+  const labelsW = contentW - totalsW; // exactly aligns with colStarts[4]
 
-  // Subtotal
-  doc.rect(M, y, contentW, 22);
+  checkPageBreak(90);
+
+  // Subtotal Row
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(M, y, labelsW, 22, "FD");
+  doc.rect(M + labelsW, y, totalsW, 22, "S");
+
   doc.setFont("helvetica", "bold");
-  doc.text("Sub Total :", M + labelsW - 10, y + 15, { align: "right" });
-  doc.text(inr(pricing.subtotal), W - M - 6, y + 15, { align: "right" });
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+  doc.text("Sub Total :", M + labelsW - 10, y + 14, { align: "right" });
+  doc.text(inr(pricing.subtotal), M + contentW - 8, y + 14, { align: "right" });
   y += 22;
 
-  // Discount (if any)
+  // Discount Row (if any)
   if (pricing.discount > 0) {
-    doc.rect(M, y, contentW, 20);
+    doc.setFillColor(248, 250, 252);
+    doc.rect(M, y, labelsW, 20, "FD");
+    doc.rect(M + labelsW, y, totalsW, 20, "S");
+
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
     doc.setTextColor(220, 38, 38);
-    doc.text("Discount :", M + labelsW - 10, y + 14, { align: "right" });
-    doc.text(`- ${inr(pricing.discount)}`, W - M - 6, y + 14, { align: "right" });
-    doc.setTextColor(30, 41, 59);
+    doc.text("Discount :", M + labelsW - 10, y + 13, { align: "right" });
+    doc.text(`- ${inr(pricing.discount)}`, M + contentW - 8, y + 13, { align: "right" });
     y += 20;
   }
 
-  // Grand Total (Including 18% GST)
-  doc.rect(M, y, contentW, 24);
+  // Tax / GST Row
+  doc.setFillColor(248, 250, 252);
+  doc.rect(M, y, labelsW, 20, "FD");
+  doc.rect(M + labelsW, y, totalsW, 20, "S");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(51, 65, 85);
+  doc.text(`GST (${pricing.tax_rate ?? 18}%) :`, M + labelsW - 10, y + 13, { align: "right" });
+  doc.text(inr(pricing.tax_amount), M + contentW - 8, y + 13, { align: "right" });
+  y += 20;
+
+  // Grand Total Row (Highlighted in Soft Corporate Blue)
+  doc.setFillColor(235, 243, 250);
+  doc.rect(M, y, labelsW, 25, "FD");
+  doc.rect(M + labelsW, y, totalsW, 25, "FD");
+
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
   doc.setTextColor(19, 78, 123);
-  doc.text(`(Including ${pricing.tax_rate ?? 18}% GST) Grand Total :`, M + labelsW - 10, y + 16, { align: "right" });
-  doc.text(inr(pricing.grand_total), W - M - 6, y + 16, { align: "right" });
+  doc.text("Grand Total :", M + labelsW - 10, y + 16, { align: "right" });
+  doc.setFontSize(10.5);
+  doc.text(inr(pricing.grand_total), M + contentW - 8, y + 16, { align: "right" });
   y += 35;
 
-  // --- FOLLOWING PAGES: SCOPE OF WORK (SOW) ---
-  // Start SOW on page 2 if there's extensive content
+  // ═══════════════════════════════════════════════════════════════
+  // PAGE 2+: SCOPE OF WORK (SOW)
+  // ═══════════════════════════════════════════════════════════════
   doc.addPage();
-  y = 54;
+  y = 45;
 
-  // SOW Big Blue Header
+  // SOW Header Banner
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   const sowTitle = clientCompany
-    ? `Scope Of Work : ${qType.replace(" Quotation", "")} For ${clientCompany}`
-    : `SCOPE OF WORK (SOW) — ${qType.replace(" Quotation", "")}`;
+    ? `SCOPE OF WORK (SOW) — ${qType.replace(" Quotation", "").toUpperCase()} FOR ${clientCompany.toUpperCase()}`
+    : `SCOPE OF WORK (SOW) — ${qType.replace(" Quotation", "").toUpperCase()}`;
   doc.text(sowTitle, W / 2, y, { align: "center" });
-  y += 28;
 
-  // Render Scope Sections
+  y += 10;
+  doc.setDrawColor(19, 78, 123);
+  doc.setLineWidth(1.2);
+  doc.line(M, y, W - M, y);
+  y += 22;
+
+  // Render Scope Sections with detailed formatting
   scopeSections.forEach((sec) => {
-    checkPageBreak(60);
+    checkPageBreak(65);
 
-    // Blue section heading matching reference
+    // Section Heading with colored bar
+    doc.setFillColor(19, 78, 123);
+    doc.rect(M, y, 4, 15, "F");
+
     doc.setTextColor(19, 78, 123);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text(sec.title || "Section", M, y);
-    y += 18;
+    doc.setFontSize(12);
+    doc.text(sec.title || "Section", M + 10, y + 12);
+    y += 20;
 
-    // Body content (paragraphs and bullets)
+    // Section Body Text & Bullets
     doc.setTextColor(51, 65, 85);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
 
     const rawContent = String(sec.content || "");
     const lines = rawContent.split("\n").filter((l) => l.trim().length > 0);
@@ -438,53 +562,61 @@ export function buildDynamicQuotationPdf(quotation) {
       const isBullet = trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*") || /^\d+[\.\)]/.test(trimmed);
       const cleanLine = trimmed.replace(/^[\s•\-\*]+/, "").trim();
 
-      const splitText = doc.splitTextToSize(cleanLine, contentW - (isBullet ? 18 : 0));
-      checkPageBreak(splitText.length * 14 + 6);
+      const splitText = doc.splitTextToSize(cleanLine, contentW - (isBullet ? 22 : 8));
+      checkPageBreak(splitText.length * 13 + 6);
 
       if (isBullet) {
         doc.setFillColor(19, 78, 123);
-        doc.circle(M + 5, y + 7, 2, "F");
+        doc.circle(M + 8, y + 6, 2, "F");
         splitText.forEach((t, i) => {
-          doc.text(t, M + 16, y + 10 + i * 14);
+          doc.text(t, M + 18, y + 9 + i * 13);
         });
       } else {
         splitText.forEach((t, i) => {
-          doc.text(t, M, y + 10 + i * 14);
+          doc.text(t, M + 6, y + 9 + i * 13);
         });
       }
-      y += splitText.length * 14 + 6;
+      y += splitText.length * 13 + 5;
     });
 
-    y += 12;
+    y += 10;
   });
 
-  // --- TIMELINE TABLE (If present) ---
+  // ═══════════════════════════════════════════════════════════════
+  // FEATURES & TIMELINE TABLE (STRICT BOUNDARIES)
+  // ═══════════════════════════════════════════════════════════════
   if (timelineItems.length > 0) {
     checkPageBreak(90);
 
+    doc.setFillColor(19, 78, 123);
+    doc.rect(M, y, 4, 15, "F");
     doc.setTextColor(19, 78, 123);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Features & Timeline", M, y);
-    y += 16;
-
-    const tColW = { phase: 130, act: 240, time: contentW - 370 };
-    doc.setFillColor(19, 78, 123);
-    doc.rect(M, y, contentW, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.text("Phase", M + 8, y + 14);
-    doc.text("Key Activities", M + tColW.phase + 8, y + 14);
-    doc.text("Timeline", M + tColW.phase + tColW.act + 8, y + 14);
+    doc.setFontSize(12);
+    doc.text("Features & Project Timeline", M + 10, y + 12);
     y += 20;
+
+    const tColPhase = 140;
+    const tColAct = 255;
+    const tColTime = contentW - tColPhase - tColAct;
+
+    doc.setFillColor(19, 78, 123);
+    doc.rect(M, y, contentW, 22, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8.5);
+    doc.text("Phase / Milestone", M + 8, y + 14);
+    doc.text("Key Activities & Deliverables", M + tColPhase + 8, y + 14);
+    doc.text("Estimated Timeline", M + tColPhase + tColAct + 8, y + 14);
+    y += 22;
 
     doc.setTextColor(30, 41, 59);
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
 
     timelineItems.forEach((t) => {
-      const pLines = doc.splitTextToSize(String(t.phase || ""), tColW.phase - 16);
-      const aLines = doc.splitTextToSize(String(t.key_activities || ""), tColW.act - 16);
-      const tLines = doc.splitTextToSize(String(t.timeline || ""), tColW.time - 16);
+      const pLines = doc.splitTextToSize(String(t.phase || ""), tColPhase - 16);
+      const aLines = doc.splitTextToSize(String(t.key_activities || ""), tColAct - 16);
+      const tLines = doc.splitTextToSize(String(t.timeline || ""), tColTime - 16);
       const rowH = Math.max(24, Math.max(pLines.length, aLines.length, tLines.length) * 12 + 10);
 
       checkPageBreak(rowH + 20);
@@ -492,147 +624,196 @@ export function buildDynamicQuotationPdf(quotation) {
       doc.setDrawColor(203, 213, 225);
       doc.setLineWidth(0.5);
       doc.rect(M, y, contentW, rowH);
-      doc.line(M + tColW.phase, y, M + tColW.phase, y + rowH);
-      doc.line(M + tColW.phase + tColW.act, y, M + tColW.phase + tColW.act, y + rowH);
+      doc.line(M + tColPhase, y, M + tColPhase, y + rowH);
+      doc.line(M + tColPhase + tColAct, y, M + tColPhase + tColAct, y + rowH);
 
       pLines.forEach((l, i) => doc.text(l, M + 8, y + 13 + i * 11));
-      aLines.forEach((l, i) => doc.text(l, M + tColW.phase + 8, y + 13 + i * 11));
-      tLines.forEach((l, i) => doc.text(l, M + tColW.phase + tColW.act + 8, y + 13 + i * 11));
+      aLines.forEach((l, i) => doc.text(l, M + tColPhase + 8, y + 13 + i * 11));
+      tLines.forEach((l, i) => doc.text(l, M + tColPhase + tColAct + 8, y + 13 + i * 11));
 
       y += rowH;
     });
 
-    y += 20;
+    y += 18;
   }
 
-  // --- INCLUSIONS SECTION ---
+  // ═══════════════════════════════════════════════════════════════
+  // INCLUSIONS SECTION
+  // ═══════════════════════════════════════════════════════════════
   if (inclusions.length > 0) {
-    checkPageBreak(60);
+    checkPageBreak(70);
 
+    doc.setFillColor(19, 78, 123);
+    doc.rect(M, y, 4, 15, "F");
     doc.setTextColor(19, 78, 123);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Inclusions", M, y);
-    y += 16;
+    doc.setFontSize(12);
+    doc.text("Standard Deliverables & Inclusions", M + 10, y + 12);
+    y += 20;
 
     doc.setTextColor(51, 65, 85);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
 
     inclusions.forEach((inc) => {
       const clean = String(inc).replace(/^[\s•\-\*]+/, "").trim();
-      const splitText = doc.splitTextToSize(clean, contentW - 20);
-      checkPageBreak(splitText.length * 14 + 6);
+      const splitText = doc.splitTextToSize(clean, contentW - 24);
+      checkPageBreak(splitText.length * 13 + 6);
 
-      doc.setFillColor(19, 78, 123);
-      doc.circle(M + 5, y + 5, 2, "F");
+      doc.setFillColor(22, 163, 74); // Green check dot
+      doc.circle(M + 8, y + 6, 2.5, "F");
       splitText.forEach((t, i) => {
-        doc.text(t, M + 16, y + 8 + i * 13);
+        doc.text(t, M + 18, y + 9 + i * 12);
       });
-      y += splitText.length * 13 + 6;
+      y += splitText.length * 12 + 6;
     });
 
-    y += 20;
+    y += 18;
   }
 
-  // --- BANK DETAILS SECTION ---
+  // ═══════════════════════════════════════════════════════════════
+  // STRUCTURED BANK DETAILS CARD
+  // ═══════════════════════════════════════════════════════════════
   checkPageBreak(120);
+
+  doc.setFillColor(19, 78, 123);
+  doc.rect(M, y, 4, 15, "F");
   doc.setTextColor(19, 78, 123);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Bank Details:", M, y);
-  y += 16;
+  doc.text("Bank Account Details", M + 10, y + 12);
+  y += 18;
 
-  doc.setTextColor(30, 41, 59);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.text(`Company name: ${BANK_DETAILS.companyName}`, M, y);
-  y += 14;
-  doc.text(`Account number: ${BANK_DETAILS.accountNumber}`, M, y);
-  y += 14;
-  doc.text(`IFSC: ${BANK_DETAILS.ifsc}`, M, y);
-  y += 14;
-  doc.text(`SWIFT Code: ${BANK_DETAILS.swift}`, M, y);
-  y += 14;
-  doc.text(`Bank name: ${BANK_DETAILS.bankName}`, M, y);
-  y += 14;
-  doc.text(`Branch: ${BANK_DETAILS.branch}`, M, y);
-  y += 25;
+  const bankBoxH = 76;
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(M, y, contentW, bankBoxH, "FD");
+  doc.line(M + halfW, y, M + halfW, y + bankBoxH);
 
-  // --- TERMS & CONDITIONS ---
+  // Left Bank Columns
+  const bLeft = [
+    ["Account Name", BANK_DETAILS.companyName],
+    ["Bank Name", BANK_DETAILS.bankName],
+    ["Account No.", BANK_DETAILS.accountNumber]
+  ];
+  bLeft.forEach(([lbl, val], i) => {
+    const by = y + 17 + i * 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(lbl + " :", M + 12, by);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 41, 59);
+    doc.text(val, M + 85, by);
+  });
+
+  // Right Bank Columns
+  const bRight = [
+    ["IFSC Code", BANK_DETAILS.ifsc],
+    ["SWIFT Code", BANK_DETAILS.swift],
+    ["Branch Name", BANK_DETAILS.branch]
+  ];
+  bRight.forEach(([lbl, val], i) => {
+    const by = y + 17 + i * 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(lbl + " :", M + halfW + 12, by);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 41, 59);
+    doc.text(val, M + halfW + 80, by);
+  });
+
+  y += bankBoxH + 18;
+
+  // ═══════════════════════════════════════════════════════════════
+  // TERMS & CONDITIONS (IN BORDERED CARD)
+  // ═══════════════════════════════════════════════════════════════
   if (raw.terms_conditions) {
-    checkPageBreak(70);
+    checkPageBreak(80);
+
+    doc.setFillColor(19, 78, 123);
+    doc.rect(M, y, 4, 15, "F");
     doc.setTextColor(19, 78, 123);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Terms & Conditions:", M, y);
-    y += 14;
+    doc.setFontSize(12);
+    doc.text("Terms & Commercial Conditions", M + 10, y + 12);
+    y += 18;
+
+    const termLines = doc.splitTextToSize(raw.terms_conditions, contentW - 20);
+    const termBoxH = Math.max(34, termLines.length * 12 + 14);
+    checkPageBreak(termBoxH + 20);
+
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(M, y, contentW, termBoxH, "FD");
 
     doc.setTextColor(71, 85, 105);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    const termLines = doc.splitTextToSize(raw.terms_conditions, contentW);
-    termLines.forEach((l) => {
-      checkPageBreak(14);
-      doc.text(l, M, y);
-      y += 13;
+    doc.setFontSize(8.5);
+    termLines.forEach((l, i) => {
+      doc.text(l, M + 10, y + 14 + i * 12);
     });
-    y += 15;
+    y += termBoxH + 18;
   }
 
-  // --- CLOSING & SIGNATURE ---
-  checkPageBreak(110);
-  doc.setTextColor(51, 65, 85);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text("Thank you for the opportunity to present this proposal.", M, y);
-  y += 14;
-  doc.text("We look forward to supporting your business with our technology solutions.", M, y);
-  y += 14;
-  doc.text("Please feel free to contact us if you require any clarification.", M, y);
-  y += 24;
+  // ═══════════════════════════════════════════════════════════════
+  // STRUCTURED SIGNATURE & ACCEPTANCE CARD
+  // ═══════════════════════════════════════════════════════════════
+  checkPageBreak(125);
+  const closingBoxH = 92;
 
-  doc.setTextColor(19, 78, 123);
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(M, y, contentW, closingBoxH, "FD");
+  doc.line(M + halfW, y, M + halfW, y + closingBoxH);
+
+  // Left: Client Acceptance
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11.5);
-  doc.text("Warm Regards,", M, y);
-  y += 16;
-  doc.text(COMPANY_DETAILS.shortName, M, y);
-  y += 14;
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("CLIENT ACCEPTANCE & APPROVAL", M + 12, y + 16);
 
-  doc.setTextColor(51, 65, 85);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(`GST: ${COMPANY_DETAILS.gstin}`, M, y);
-  y += 14;
-  doc.text(COMPANY_DETAILS.addressLine1, M, y);
-  y += 12;
-  doc.text(COMPANY_DETAILS.addressLine2, M, y);
-  y += 12;
-  doc.text(COMPANY_DETAILS.cityStatePin, M, y);
-  y += 12;
-  doc.text(COMPANY_DETAILS.email, M, y);
-  y += 12;
-  doc.text(COMPANY_DETAILS.phone, M, y);
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Accepted & Confirmed on behalf of Client:", M + 12, y + 32);
+  doc.text("Authorized Name: ____________________________", M + 12, y + 54);
+  doc.text("Signature & Seal: ____________________________", M + 12, y + 74);
 
-  // --- PAGE NUMBERING FOOTER ON ALL PAGES ---
+  // Right: Company Details
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("FOR QIRO TECH INNOVATION PVT. LTD.", M + halfW + 12, y + 16);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(19, 78, 123);
+  doc.text("Authorized Signatory", M + halfW + 12, y + 32);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Email: ${COMPANY_DETAILS.email} | Ph: ${COMPANY_DETAILS.phone}`, M + halfW + 12, y + 54);
+  doc.text(`GSTIN: ${COMPANY_DETAILS.gstin}`, M + halfW + 12, y + 74);
+
+  y += closingBoxH + 18;
+
+  // ═══════════════════════════════════════════════════════════════
+  // PAGE NUMBERING FOOTER ON ALL PAGES
+  // ═══════════════════════════════════════════════════════════════
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
-    doc.text(
-      `Page ${i} of ${totalPages}`,
-      W - M,
-      H - 22,
-      { align: "right" }
-    );
-    doc.text(
-      `Qiro CRM · Confidential Quotation #${qNum}`,
-      M,
-      H - 22
-    );
+    doc.text(`Page ${i} of ${totalPages}`, W - M, H - 20, { align: "right" });
+    doc.text(`Qiro CRM · Confidential Quotation #${qNum}`, M, H - 20);
   }
 
   return doc;

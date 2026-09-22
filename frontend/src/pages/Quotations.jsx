@@ -51,10 +51,30 @@ const SCOPE_SUGGESTIONS = {
     { title: "Technology", content: "• Frontend: React, Next.js, HTML5, CSS3, Tailwind CSS\n• Backend & Database: Node.js, PostgreSQL / Supabase\n• Cloud & Deployment: Vercel / AWS Cloud Infrastructure" }
   ],
   "Software Quotation": [
-    { title: "Project Overview", content: "Development of a full-featured, scalable enterprise software application customized to client operational workflows with role-based access control and analytics." },
-    { title: "Objectives", content: "• Automate manual tasks and eliminate data entry redundancies\n• Provide end-to-end data integrity and role-based security\n• Ensure sub-second latency and 99.9% application uptime" },
-    { title: "Deliverables", content: "1. Architecture specification and DB schema documentation\n2. Responsive Web / Mobile application frontend\n3. Scalable RESTful API backend\n4. Automated QA testing reports and staging deployment\n5. Production deployment and source code handover" },
-    { title: "Technology", content: "• Frontend: React / Next.js / TypeScript\n• Backend: Node.js, Express, PostgreSQL\n• DevOps: Docker, CI/CD GitHub Actions" }
+    {
+      title: "1. Project Overview & Executive Summary",
+      content: "The objective of this project is the end-to-end design, custom development, testing, and cloud deployment of a scalable enterprise-grade software system tailored to the client's exact operational workflows. The software will serve as the centralized business operational platform, streamlining processes, eliminating data fragmentation, and enabling real-time analytics with role-based access security."
+    },
+    {
+      title: "2. System Architecture & Performance Standards",
+      content: "• Modular Architecture: Layered architecture decoupling frontend presentation, backend business logic, and database persistence layers.\n• High Availability: Designed for 99.9% uptime with automated health monitoring and graceful degradation.\n• Performance Benchmark: Sub-second API response times (<500ms) utilizing connection pooling and optimized database indexing.\n• Security Standards: OWASP Top 10 compliance, SSL/TLS 1.3 encryption, SQL injection/XSS prevention, and stateless JWT token authentication."
+    },
+    {
+      title: "3. Core Functional Modules & Specifications",
+      content: "1. Multi-Tier Role-Based Access Control (RBAC): SuperAdmin, Manager, Staff, and Client roles with granular module-level permissions.\n2. Central Executive Dashboard: Real-time visual KPIs, graphical business trends, upcoming task counters, and operational shortcuts.\n3. Operational Entity Lifecycle & Workflows: Dynamic forms, validation rules, status pipelines, and transaction history tracking.\n4. Notification & Communication Engine: Real-time in-app alerts, automated transaction emails, and WhatsApp status updates.\n5. Reporting, Audit Trail & Data Export: Filterable reporting tables, custom date ranges, and one-click export to formatted Excel and PDF documents."
+    },
+    {
+      title: "4. Technology Stack & Cloud Infrastructure",
+      content: "• Frontend Layer: React.js, Next.js, TypeScript, Tailwind CSS, Lucide Icons, Headless UI\n• Backend & Application Layer: Node.js, Express.js REST APIs, JWT authentication middleware\n• Database Tier: PostgreSQL relational database with foreign-key constraints and ACID transaction compliance\n• Cloud & DevOps: Vercel / AWS Cloud Infrastructure, Docker containerization, GitHub Actions CI/CD pipeline, Cloudflare CDN"
+    },
+    {
+      title: "5. Quality Assurance, Security Audit & Testing",
+      content: "• Comprehensive Unit and Integration testing for critical business logic workflows.\n• Cross-browser testing across Google Chrome, Mozilla Firefox, Apple Safari, and Microsoft Edge.\n• Multi-viewport responsive UI verification across desktop, tablet, and mobile devices.\n• Security penetration checks including authorization bypass tests, parameter validation, and rate-limiting stress testing."
+    },
+    {
+      title: "6. Post-Launch Warranty, Maintenance & SLA",
+      content: "• 90 Days of complimentary post-launch warranty covering all bug fixes, defect rectifications, and system stability maintenance.\n• Service Level Agreement (SLA): Critical severity issues addressed within 4 hours; general operational queries resolved within 24 hours.\n• Database maintenance, automated weekly backup monitoring, and operating environment security patches."
+    }
   ],
   "Digital Marketing Quotation": [
     { title: "Project Overview", content: "This Scope of Work covers the digital marketing services for creating and managing social media content for the client. The main focus will be on platforms such as Instagram and Facebook, with regular communication and approvals via email or agreed tools." },
@@ -74,10 +94,13 @@ const DEFAULT_TIMELINES = {
     { phase: "Maintenance", key_activities: "Ongoing support & updates", timeline: "Ongoing" }
   ],
   "Software Quotation": [
-    { phase: "Phase 1: Architecture & UI/UX", key_activities: "SRS document, wireframing, API contracts", timeline: "Weeks 1-2" },
-    { phase: "Phase 2: Core Development", key_activities: "Backend API and responsive module build", timeline: "Weeks 3-5" },
-    { phase: "Phase 3: UAT & Integration", key_activities: "Integration testing & user acceptance testing", timeline: "Week 6" },
-    { phase: "Phase 4: Deployment", key_activities: "Cloud production setup & handover", timeline: "Week 7" }
+    { phase: "Phase 1: Discovery, SRS & UI/UX Wireframing", key_activities: "Requirement gathering, technical architecture blueprint, clickable interactive Figma wireframes", timeline: "Weeks 1 - 2" },
+    { phase: "Phase 2: Database Modeling & Core API Engine", key_activities: "Relational DB schema, authentication & RBAC system, core RESTful API endpoints", timeline: "Weeks 3 - 4" },
+    { phase: "Phase 3: Frontend Module Development", key_activities: "Responsive UI dashboard, operational form workflows, data grid state integration", timeline: "Weeks 5 - 6" },
+    { phase: "Phase 4: Integrations & Gateway Automation", key_activities: "Payment gateway, automated email & WhatsApp alerts, Excel/PDF reporting engine", timeline: "Week 7" },
+    { phase: "Phase 5: User Acceptance Testing (UAT) & Staging", key_activities: "Staging deployment, stakeholder demo walkthrough, feedback incorporation & bug fixing", timeline: "Week 8" },
+    { phase: "Phase 6: Production Cloud Go-Live & Launch", key_activities: "DNS routing, SSL certificates, cloud production launch, complete repository code handover", timeline: "Week 9" },
+    { phase: "Phase 7: 90-Day Post-Launch Warranty & Support", key_activities: "Complimentary bug rectification, SLA support, live user & admin training sessions", timeline: "Post-Launch" }
   ],
   "Digital Marketing Quotation": [
     { phase: "Strategy & Onboarding", key_activities: "Brand audit, audience research & tone setting", timeline: "Days 1-5" },
@@ -96,10 +119,13 @@ const DEFAULT_INCLUSIONS = {
     "WhatsApp update support"
   ],
   "Software Quotation": [
-    "Source code repository access and documentation",
-    "Cloud staging and production infrastructure setup",
-    "3 months complimentary bug fixing and support",
-    "Admin training session via Google Meet"
+    "Complete Full-Stack Source Code repository access (GitHub/GitLab) with full intellectual property (IP) rights transfer.",
+    "Comprehensive Database Schema, ER Diagrams, and API documentation for internal records.",
+    "Cloud staging and production infrastructure configuration on client cloud accounts (AWS / Vercel / DigitalOcean).",
+    "Automated Daily Database Backups and point-in-time disaster recovery configuration.",
+    "90 Days complimentary post-launch bug fixing, system monitoring, and stability warranty.",
+    "Live interactive admin and operational team training sessions via Google Meet.",
+    "SSL certificates, security hardening, CDN setup, and DDOS mitigation."
   ],
   "Digital Marketing Quotation": [
     "Content strategy and monthly theme planning based on client’s business goals.",
@@ -191,12 +217,44 @@ function QuotationBuilderModal({ open, quotation, onClose, onSaved }) {
       } else if (newType === "Software Quotation") {
         setItems([
           {
-            description: "Custom ERP / CRM Software System",
-            technology: "React, Node.js, PostgreSQL",
-            deliverables: "1) Custom Modules\n2) Role Permissions\n3) API & Cloud Hosting",
+            description: "UI/UX Design System, Wireframes & Interactive Prototype",
+            technology: "Figma, Tailwind CSS, Responsive Web",
+            deliverables: "1) User Journey Mapping\n2) Clickable High-Fidelity Prototype\n3) Design System & Tokens",
             quantity: 1,
-            unit_price: 75000,
-            total: 75000
+            unit_price: 25000,
+            total: 25000
+          },
+          {
+            description: "Core Software Engine & Custom Business Logic Modules",
+            technology: "React.js, Next.js, Node.js, TypeScript",
+            deliverables: "1) Multi-Tier Role RBAC\n2) Central KPI Dashboard\n3) Entity Lifecycle Workflows\n4) System Audit Trail Logs",
+            quantity: 1,
+            unit_price: 65000,
+            total: 65000
+          },
+          {
+            description: "RESTful API Engine, Database Architecture & Security",
+            technology: "PostgreSQL, Express.js, JWT, TLS 1.3",
+            deliverables: "1) Relational DB Modeling\n2) Stateless Token Authentication\n3) Data Encryption at Rest\n4) Automated Daily Backups",
+            quantity: 1,
+            unit_price: 35000,
+            total: 35000
+          },
+          {
+            description: "Third-Party Integrations & Automation Hub",
+            technology: "Webhooks, SMTP, SMS / WhatsApp APIs",
+            deliverables: "1) Payment Gateway (Razorpay/Stripe)\n2) Automated Email & WhatsApp Alerts\n3) Excel & PDF Export Engine",
+            quantity: 1,
+            unit_price: 25000,
+            total: 25000
+          },
+          {
+            description: "DevOps, Cloud Hosting Setup, CI/CD & QA Testing",
+            technology: "Docker, AWS / Vercel Cloud, GitHub Actions",
+            deliverables: "1) Production Cloud Hosting Setup\n2) Automated CI/CD Pipeline\n3) End-to-End QA Testing Audit\n4) Source Code Handover",
+            quantity: 1,
+            unit_price: 20000,
+            total: 20000
           }
         ]);
       } else {
